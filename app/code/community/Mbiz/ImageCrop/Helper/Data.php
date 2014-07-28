@@ -114,7 +114,7 @@ class Mbiz_ImageCrop_Helper_Data extends Mage_Core_Helper_Abstract
         unset($imageObj2);
 
         // Return the new image URL
-        return $imageUrl;
+        return $this->_filterImageUrl($imageUrl);
     }
 
     /**
@@ -188,7 +188,7 @@ class Mbiz_ImageCrop_Helper_Data extends Mage_Core_Helper_Abstract
         unset($imageObj);
 
         // Return the new image URL
-        return $imageUrl;
+        return $this->_filterImageUrl($imageUrl);
     }
 
     /**
@@ -294,6 +294,22 @@ class Mbiz_ImageCrop_Helper_Data extends Mage_Core_Helper_Abstract
     protected function _getMediaBaseDir()
     {
         return Mage::getBaseDir('media');
+    }
+
+    /**
+     * Filter generated image Url to prevent an issue with Windows DS
+     *
+     * @param $url
+     * @return mixed
+     */
+    protected function _filterImageUrl($url)
+    {
+        // Windows DS fix
+        if (DS == '\\') {
+            $url = str_replace('\\', '/', $url);
+        }
+
+        return $url;
     }
 
     /**
