@@ -77,7 +77,7 @@ class Mbiz_ImageCrop_Helper_Data extends Mage_Core_Helper_Abstract
 
         // If the cropped image has been already generated, we return it and skip another useless generation
         if (is_file($imageFullPath)) {
-            return $imageUrl;
+            return $this->_filterImageUrl($imageUrl);
         }
 
         /*
@@ -170,7 +170,7 @@ class Mbiz_ImageCrop_Helper_Data extends Mage_Core_Helper_Abstract
 
         // If the resized image has been already generated, we return it and skip another useless generation
         if (is_file($imageFullPath)) {
-            return $imageUrl;
+            return $this->_filterImageUrl($imageUrl);
         }
 
         /*
