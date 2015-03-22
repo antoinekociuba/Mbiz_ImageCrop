@@ -20,9 +20,17 @@ class Mbiz_ImageCrop_Helper_Data extends Mage_Core_Helper_Abstract
 
     /**
      * The prefix directory (under media)
+     *
      * @var string
      */
     protected $_prefix = null;
+
+    /**
+     * Quality global setting
+     *
+     * @var int
+     */
+    protected $_quality = 95;
 
 // Monsieur Biz Tag NEW_VAR
 
@@ -32,67 +40,103 @@ class Mbiz_ImageCrop_Helper_Data extends Mage_Core_Helper_Abstract
      * @param $imageRelativePath The relative path from 'media' folder
      * @param $width
      * @param null $height
+     *
      * @return null|string The URL of the cropped image
      */
     public function crop($imageRelativePath, $width, $height = null)
     {
-        // Retrieve image absolute path and basename
-        $image      = $this->_getImageAbsolutePath($imageRelativePath);
-        $imageName  = $this->_getImageBaseName($image);
+        /**
+         * Retrieve image absolute path and basename
+         */
+        $image = $this->_getImageAbsolutePath($imageRelativePath);
+        $imageName = $this->_getImageBaseName($image);
 
-        // If source image does not exist
+        /**
+         * If source image does not exist
+         */
         if (!is_file($image)) {
             return null;
         }
 
-        // Determine the height of the generated image
+        /**
+         * Determine the height of the generated image
+         */
         if ($height === null) {
             $height = $width;
         }
 
-        // Misc parameters
+        /**
+         * Misc parameters
+         */
         $parameters = array(
             'constrainOnly',
             'keepAspectRatio',
             'keepFrame',
             'crop',
+            $this->_getImageAdapter()
         );
 
-        // Parameters hash
+        /**
+         * Parameters hash
+         */
         $parametersHash = $this->_getParametersHash($parameters);
 
-        // Directories
-        $baseDir            = $this->_getMediaBaseDir();
-        $intermediateDir    = $this->_generateIntermediateDir($width, $height, $parametersHash, $imageName);
-        $dir                = $baseDir . DS . $intermediateDir;
+        /**
+         * Directories
+         */
+        $baseDir = $this->_getMediaBaseDir();
+        $intermediateDir = $this->_generateIntermediateDir($width, $height, $parametersHash, $imageName);
+        $dir = $baseDir . DS . $intermediateDir;
 
-        // Check if destination directory exists
+        /**
+         * Check if destination directory exists
+         */
         $this->_checkDestinationDir($dir);
 
-        // Get the new image Url
+        /**
+         * Get new image Url
+         */
         $imageUrl = $this->_getImageUrl($intermediateDir, $imageName);
 
-        // The new image full path
+        /**
+         * New image full path
+         */
         $imageFullPath = $dir . DS . $imageName;
 
-        // If the cropped image has been already generated, we return it and skip another useless generation
+        /**
+         * If cropped image has been already generated, we return it and skip another useless generation
+         */
         if (is_file($imageFullPath)) {
             return $this->_filterImageUrl($imageUrl);
         }
 
-        /*
+        /**
          * First, resize the image
          */
-        $imageObj  = new Varien_Image($image);
+        $imageObj = new Varien_Image($image, $this->_getImageAdapter());
         $oldHeight = $imageObj->getOriginalHeight();
-        $oldWidth  = $imageObj->getOriginalWidth();
+        $oldWidth = $imageObj->getOriginalWidth();
 
-        // Constraints
+        /**
+         * Settings
+         */
         $imageObj->constrainOnly(true);
         $imageObj->keepAspectRatio(true);
         $imageObj->keepFrame(false);
+        $imageObj->quality($this->_quality);
 
-        // Resize in the good way
+        /**
+         * Transparency detection
+         */
+        $transparent = false;
+        if (exif_imagetype($image) == IMAGETYPE_PNG) {
+            $transparent = true;
+        }
+        $imageObj->keepTransparency($transparent);
+
+        /**
+         * Resize in the good way
+         */
         if (($oldWidth / $oldHeight) < ($width / $height)) {
             $imageObj->resize($width, null);
         } else {
@@ -102,18 +146,22 @@ class Mbiz_ImageCrop_Helper_Data extends Mage_Core_Helper_Abstract
         $imageObj->save($dir, $imageName);
         unset($imageObj);
 
-        /*
-         * Then we crop the image previously resized
+        /**
+         * Then we crop previously resized image
          */
-        $imageObj2 = new Varien_Image($imageFullPath);
-        $top       = ($imageObj2->getOriginalHeight() - $height) / 2;
-        $left      = ($imageObj2->getOriginalWidth() - $width) / 2;
+        $imageObj2 = new Varien_Image($imageFullPath, $this->_getImageAdapter());
+        $imageObj2->quality($this->_quality);
+
+        $top = ($imageObj2->getOriginalHeight() - $height) / 2;
+        $left = ($imageObj2->getOriginalWidth() - $width) / 2;
 
         $imageObj2->crop($top, $left, $left, $top);
         $imageObj2->save($imageFullPath);
         unset($imageObj2);
 
-        // Return the new image URL
+        /**
+         * Return new image URL
+         */
         return $this->_filterImageUrl($imageUrl);
     }
 
@@ -127,67 +175,102 @@ class Mbiz_ImageCrop_Helper_Data extends Mage_Core_Helper_Abstract
      */
     public function resize($imageRelativePath, $width, $height = null)
     {
-        // Retrieve image absolute path and basename
-        $image      = $this->_getImageAbsolutePath($imageRelativePath);
-        $imageName  = $this->_getImageBaseName($image);
+        /**
+         * Retrieve image absolute path and basename
+         */
+        $image = $this->_getImageAbsolutePath($imageRelativePath);
+        $imageName = $this->_getImageBaseName($image);
 
-        // If source image does not exist
+        /**
+         * If source image does not exist
+         */
         if (!is_file($image)) {
             return null;
         }
 
-        // Determine the 'height path' value of the generated image
+        /**
+         * Determine the 'height path' value of the generated image
+         */
         if ($height === null) {
             $heightPathValue = 0;
         } else {
             $heightPathValue = $height;
         }
 
-        // Misc parameters
+        /**
+         * Misc parameters
+         */
         $parameters = array(
             'constrainOnly',
             'keepAspectRatio',
             'keepFrame',
             'resize',
+            $this->_getImageAdapter()
         );
 
-        // Parameters hash
+        /**
+         * Parameters hash
+         */
         $parametersHash = $this->_getParametersHash($parameters);
 
-        // Directories
-        $baseDir            = $this->_getMediaBaseDir();
-        $intermediateDir    = $this->_generateIntermediateDir($width, $heightPathValue, $parametersHash, $imageName);
-        $dir                = $baseDir . DS . $intermediateDir;
+        /**
+         * Directories
+         */
+        $baseDir = $this->_getMediaBaseDir();
+        $intermediateDir = $this->_generateIntermediateDir($width, $heightPathValue, $parametersHash, $imageName);
+        $dir = $baseDir . DS . $intermediateDir;
 
-        // Check if destination directory exists
+        /**
+         * Check if destination directory exists
+         */
         $this->_checkDestinationDir($dir);
 
-        // Get the new image Url
+        /**
+         * Get new image Url
+         */
         $imageUrl = $this->_getImageUrl($intermediateDir, $imageName);
 
-        // The new image full path
+        /**
+         * New image full path
+         */
         $imageFullPath = $dir . DS . $imageName;
 
-        // If the resized image has been already generated, we return it and skip another useless generation
+        /**
+         * If resized image has been already generated, we return it and skip another useless generation
+         */
         if (is_file($imageFullPath)) {
             return $this->_filterImageUrl($imageUrl);
         }
 
-        /*
-         * Resize the image
+        /**
+         * Resize image
          */
-        $imageObj  = new Varien_Image($image);
+        $imageObj = new Varien_Image($image, $this->_getImageAdapter());
 
-        // Constraints
+        /**
+         * Settings
+         */
         $imageObj->constrainOnly(true);
         $imageObj->keepAspectRatio(true);
         $imageObj->keepFrame(false);
+        $imageObj->quality($this->_quality);
+
+        /**
+         * Transparency detection
+         */
+        $transparent = false;
+        if (exif_imagetype($image) == IMAGETYPE_PNG) {
+            $transparent = true;
+        }
+        $imageObj->keepTransparency($transparent);
 
         $imageObj->resize($width, $height);
         $imageObj->save($dir, $imageName);
         unset($imageObj);
 
-        // Return the new image URL
+        /**
+         * Return new image URL
+         */
         return $this->_filterImageUrl($imageUrl);
     }
 
@@ -226,7 +309,9 @@ class Mbiz_ImageCrop_Helper_Data extends Mage_Core_Helper_Abstract
     {
         $intermediateDir = '';
 
-        // Prefix the directory
+        /**
+         * Prefix the directory
+         */
         if ($prefix = $this->getPrefix()) {
             $intermediateDir .= $prefix . DS;
         }
@@ -235,8 +320,7 @@ class Mbiz_ImageCrop_Helper_Data extends Mage_Core_Helper_Abstract
             . $width . 'x' . $height . DS
             . $parametersHash . DS
             . strtolower($imageName[0]) . DS
-            . strtolower(isset($imageName[1]) && $imageName[1] !== '.' ? $imageName[1] : $imageName[0])
-        ;
+            . strtolower(isset($imageName[1]) && $imageName[1] !== '.' ? $imageName[1] : $imageName[0]);
 
         return $intermediateDir;
     }
@@ -322,9 +406,22 @@ class Mbiz_ImageCrop_Helper_Data extends Mage_Core_Helper_Abstract
         if (!@is_dir($dir)) {
             $io = new Varien_Io_File();
             $io->setAllowCreateFolders(true)
-                ->createDestinationDir($dir)
-            ;
+                ->createDestinationDir($dir);
         }
+    }
+
+    /**
+     * Get image adapter
+     *
+     * (FireGento_PerfectWatermarks setting compatibility)
+     *
+     * @return mixed|string
+     */
+    protected function _getImageAdapter()
+    {
+        return Mage::getStoreConfig('design/watermark_adapter/adapter')
+            ? Mage::getStoreConfig('design/watermark_adapter/adapter')
+            : Varien_Image_Adapter::ADAPTER_GD2;
     }
 
 // Monsieur Biz Tag NEW_METHOD
