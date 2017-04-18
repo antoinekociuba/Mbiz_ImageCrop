@@ -73,7 +73,8 @@ class Mbiz_ImageCrop_Helper_Data extends Mage_Core_Helper_Abstract
             'keepAspectRatio',
             'keepFrame',
             'crop',
-            $this->_getImageAdapter()
+            $this->_getImageAdapter(),
+            $this->getQuality(),
         );
 
         /**
@@ -205,7 +206,8 @@ class Mbiz_ImageCrop_Helper_Data extends Mage_Core_Helper_Abstract
             'keepAspectRatio',
             'keepFrame',
             'resize',
-            $this->_getImageAdapter()
+            $this->_getImageAdapter(),
+            $this->getQuality()
         );
 
         /**
