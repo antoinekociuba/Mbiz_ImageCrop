@@ -26,7 +26,7 @@ class Mbiz_ImageCrop_Helper_Data extends Mage_Core_Helper_Abstract
     protected $_prefix = null;
 
     /**
-     * Quality global setting
+     * Default quality setting
      *
      * @var int
      */
@@ -123,7 +123,7 @@ class Mbiz_ImageCrop_Helper_Data extends Mage_Core_Helper_Abstract
         $imageObj->constrainOnly(true);
         $imageObj->keepAspectRatio(true);
         $imageObj->keepFrame(false);
-        $imageObj->quality($this->_quality);
+        $imageObj->quality($this->getQuality());
 
         /**
          * Transparency detection
@@ -150,7 +150,7 @@ class Mbiz_ImageCrop_Helper_Data extends Mage_Core_Helper_Abstract
          * Then we crop previously resized image
          */
         $imageObj2 = new Varien_Image($imageFullPath, $this->_getImageAdapter());
-        $imageObj2->quality($this->_quality);
+        $imageObj2->quality($this->getQuality());
 
         $top = ($imageObj2->getOriginalHeight() - $height) / 2;
         $left = ($imageObj2->getOriginalWidth() - $width) / 2;
@@ -253,7 +253,7 @@ class Mbiz_ImageCrop_Helper_Data extends Mage_Core_Helper_Abstract
         $imageObj->constrainOnly(true);
         $imageObj->keepAspectRatio(true);
         $imageObj->keepFrame(false);
-        $imageObj->quality($this->_quality);
+        $imageObj->quality($this->getQuality());
 
         /**
          * Transparency detection
@@ -294,6 +294,28 @@ class Mbiz_ImageCrop_Helper_Data extends Mage_Core_Helper_Abstract
     public function getPrefix()
     {
         return $this->_prefix;
+    }
+
+    /**
+     * Set current quality for resize/crop
+     *
+     * @param string|int $quality
+     * @return $this
+     */
+    public function setQuality($quality)
+    {
+        $this->_quality = (int)$quality;
+        return $this;
+    }
+
+    /**
+     * Retrieve current quality for resize/crop
+     *
+     * @return int
+     */
+    public function getQuality()
+    {
+        return $this->_quality;
     }
 
     /**
