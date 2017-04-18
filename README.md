@@ -47,4 +47,11 @@ $imageUrl = Mage::helper('mbiz_imagecrop')->setPrefix('baz')->resize($imagePath,
 
 The image will be saved in `/media/baz/cache/100x200/hash/b/a/bar.png`.
 
+Finally, you can define a custom quality for the newly generated image (95 by default), by using available setter on helper :
+
+```php
+<?php
+$imageUrl = Mage::helper('mbiz_imagecrop')->setPrefix('baz')->setQuality(80)->resize($imagePath, $width, $height);
+```
+
 Have fun!
